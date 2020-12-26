@@ -1,0 +1,22 @@
+---
+
+restream_key: gMjrP0buJ6WJbpc0QQNRpDLTUwfNxL3lGo0uqV8VK9UK9ANFgBDphO0zUpcxTWtW # You choose this secret to protect your restream server from being targeted from unauthorized streaming attempts
+
+stats_module: disabled # experimental and insecure
+hls_support: disabled # experimental 
+
+rtmps_support: disabled # set to "enabled" without quotes to include the following rtmps destinations as restream targets
+# Use yellowduck.tv to generate Instagram streaming keys
+rtmps_destinations:
+  - description: instagram
+    domain: localhost # e.g. live-upload.instagram.com
+    remote_port: 443
+    url_suffix: /rtmp/
+    rtmp_key: 18078037XXXXXXXXXXXXXXXXXXXX
+    local_port: 19350
+  - description: gelbeente
+    domain: localhost # e.g. live-upload.instagram.com
+    remote_port: 443
+    url_suffix: /rtmp/
+    rtmp_key: 18174787XXXXXXXXXXXXXXXXXXXX
+    local_port: 19351

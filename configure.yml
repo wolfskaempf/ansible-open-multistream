@@ -1,0 +1,40 @@
+---
+- name: configure and start nginx and stunnel
+  remote_user: root
+  hosts: all
+
+  tasks:
+  - name: configure nginx for forwarding
+    template:
+      src: restream.conf
+      dest: /usr/local/nginx/conf/nginx.conf
+
+  - name: check if nginx is already running (error is normal)
+    shell: ps x | grep "nginx" | grep -v grep
+    ignore_errors: yes
+    register: service_nginx_status
+
+  - name: start nginx
+    shell: /usr/local/nginx/sbin/nginx
+    when: service_nginx_status.rc == 1
+
+  - name: reload nginx
+    shell: /usr/local/nginx/sbin/nginx -s reload
+    when: service_nginx_status.rc == 0
+
+  - name: enable stunnel
+    lineinfile:
+      path: /etc/default/stunnel4
+      line: ENABLE=1
+      create: yes
+
+  - name: configure stunnel for forwarding
+    template:
+      src: stunnel.conf
+      dest: /etc/stunnel/stunnel.conf
+  
+  - name: restart stunnel
+    service:
+      name: stunnel4
+      state: restarted
+      enabled: yes

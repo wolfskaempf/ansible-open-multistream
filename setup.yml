@@ -1,0 +1,87 @@
+---
+- name: build and install nginx with nginx-rtmp-module and install stunnel
+  remote_user: root
+  hosts: all
+  vars:
+    source_files_dir: /root/build/sources
+    build_dir: /root/build/
+    nginx_build_dir: "{{ build_dir }}/nginx-1.18.0"
+    build_requisites:
+      - apt-utils
+      - autoconf
+      - automake
+      - build-essential
+      - git
+      - libcurl4-openssl-dev
+      - libgeoip-dev
+      - liblmdb-dev
+      - libpcre++-dev
+      - libtool
+      - libxml2-dev
+      - libssl-dev
+      - libyajl-dev
+      - pkgconf
+      - zlib1g-dev
+      - fcgiwrap
+      - apache2-utils
+      - openssl
+
+  tasks:
+  - name: Run the equivalent of "apt-get update" as a separate step
+    apt:
+      update_cache: yes
+
+  - name: ensure stunnel is at the latest version
+    apt:
+      name: stunnel
+      state: present
+  
+  - name: Install build requisites for Debian
+    apt:
+      name: "{{ build_requisites }}"
+      state: present
+
+  - name: Ensure source_files_dir exists
+    file:
+      path: "{{ source_files_dir }}/nginx"
+      state: directory
+      mode: "0755"
+
+  - name: Download nginx 1.18
+    get_url:
+      url: https://nginx.org/download/nginx-1.18.0.tar.gz
+      dest: "{{ source_files_dir }}/nginx"
+      checksum: sha256:4c373e7ab5bf91d34a4f11a0c9496561061ba5eee6020db272a17a7228d35f99
+
+  - name: Ensure build_dir exists
+    file:
+      path: "{{ build_dir }}"
+      state: directory
+      mode: "0755"
+
+  - name: Extract nginx-1.18.0.tar.gz into /root/build/nginx
+    unarchive:
+      remote_src: yes
+      src: "{{ source_files_dir }}/nginx/nginx-1.18.0.tar.gz"
+      dest: "{{ build_dir }}"
+  
+  - name: Clone git repository https://github.com/sergey-dryabzhinsky/nginx-rtmp-module.git
+    git:
+      repo: "https://github.com/sergey-dryabzhinsky/nginx-rtmp-module.git"
+      dest: "{{ source_files_dir }}/nginx-rtmp-module"
+
+  - name: Configure nginx build
+    shell: "./configure  --user=root --group=root --with-ipv6 --with-http_ssl_module  --with-compat --add-module={{ source_files_dir|quote }}/nginx-rtmp-module"
+    args:
+      chdir: "{{ nginx_build_dir }}"
+
+  - name: Build nginx with nginx-rtmp-module
+    shell: make
+    args:
+      chdir: "{{ nginx_build_dir }}"
+
+  - name: Install nginx
+    shell: make install
+    args:
+      chdir: "{{ nginx_build_dir }}"
+
